@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <head>
 	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-	<title>Model domain</title>
+	<title>Hello, world!</title>
 	<!-- include three.js library -->
 	<script src='js/three.js'></script>
 	<!-- include jsartookit -->
@@ -17,34 +17,25 @@
 <body style='margin : 0px; overflow: hidden; font-family: Monospace;'>
 
 <!-- 
-  Model domain visualization by Maximilian Ramgraber
-  Based on example created by Lee Stemkoski: https://github.com/stemkoski
+  Example created by Lee Stemkoski: https://github.com/stemkoski
   Based on the AR.js library and examples created by Jerome Etienne: https://github.com/jeromeetienne/AR.js/
 -->
 
 <script>
-
 var scene, camera, renderer, clock, deltaTime, totalTime;
-
 var arToolkitSource, arToolkitContext;
-
 var markerRoot1;
-
 var mesh1;
-
 initialize();
 animate();
-
 function initialize()
 {
 	scene = new THREE.Scene();
-
-	let ambientLight = new THREE.AmbientLight( 0xcccccc, 0.5 );
+	let ambientLight = new THREE.AmbientLight( 0xcccccc, 1.0 );
 	scene.add( ambientLight );
-
+				
 	camera = new THREE.Camera();
 	scene.add(camera);
-
 	renderer = new THREE.WebGLRenderer({
 		antialias : true,
 		alpha: true
@@ -55,7 +46,6 @@ function initialize()
 	renderer.domElement.style.top = '0px'
 	renderer.domElement.style.left = '0px'
 	document.body.appendChild( renderer.domElement );
-
 	clock = new THREE.Clock();
 	deltaTime = 0;
 	totalTime = 0;
@@ -63,11 +53,9 @@ function initialize()
 	////////////////////////////////////////////////////////////
 	// setup arToolkitSource
 	////////////////////////////////////////////////////////////
-
 	arToolkitSource = new THREEx.ArToolkitSource({
 		sourceType : 'webcam',
 	});
-
 	function onResize()
 	{
 		arToolkitSource.onResize()	
@@ -77,7 +65,6 @@ function initialize()
 			arToolkitSource.copySizeTo(arToolkitContext.arController.canvas)	
 		}	
 	}
-
 	arToolkitSource.init(function onReady(){
 		onResize()
 	});
@@ -90,7 +77,6 @@ function initialize()
 	////////////////////////////////////////////////////////////
 	// setup arToolkitContext
 	////////////////////////////////////////////////////////////	
-
 	// create atToolkitContext
 	arToolkitContext = new THREEx.ArToolkitContext({
 		cameraParametersUrl: 'data/camera_para.dat',
@@ -101,58 +87,57 @@ function initialize()
 	arToolkitContext.init( function onCompleted(){
 		camera.projectionMatrix.copy( arToolkitContext.getProjectionMatrix() );
 	});
-
 	////////////////////////////////////////////////////////////
 	// setup markerRoots
 	////////////////////////////////////////////////////////////
-
 	// build markerControls
 	markerRoot1 = new THREE.Group();
+	markerRoot1.name = 'marker1';
 	scene.add(markerRoot1);
 	let markerControls1 = new THREEx.ArMarkerControls(arToolkitContext, markerRoot1, {
-		type: 'pattern', patternUrl: "data/hiro.patt",
+		type : 'pattern',
+		patternUrl : "data/hiro.patt",
 	})
-
-	let geometry1 = new THREE.SphereGeometry(1, 32,32);
-	
+	// the inside of the hole
+	let geometry1	= new THREE.CubeGeometry(2,2,2);
 	let loader = new THREE.TextureLoader();
-	let texture = loader.load( 'images/earth-sphere.jpg', render );
-	let material1 = new THREE.MeshLambertMaterial( { map: texture, opacity: 0.5 } );
+	let texture = loader.load( 'images/tiles.jpg', render );
+	let material1	= new THREE.MeshLambertMaterial({
+		transparent : true,
+		map: texture,
+		side: THREE.BackSide
+	}); 
 	
 	mesh1 = new THREE.Mesh( geometry1, material1 );
-	mesh1.position.y = 1;
+	mesh1.position.y = -1;
 	
 	markerRoot1.add( mesh1 );
 	
-	let pointLight = new THREE.PointLight( 0xffffff, 1, 100 );
-	pointLight.position.set(0.5,3,2);
-	// create a mesh to help visualize the position of the light
-	pointLight.add( 
-		new THREE.Mesh( 
-			new THREE.SphereBufferGeometry( 0.05, 16,8 ), 
-			new THREE.MeshBasicMaterial({ color: 0xffffff, opacity: 0.5 }) 
-		) 
-	);
-	markerRoot1.add( pointLight );
+	// the invisibility cloak (plane with a hole)
+	let geometry0 = new THREE.PlaneGeometry(18,18, 9,9);
+	geometry0.faces.splice(80, 2); // make hole by removing top two triangles
+	geometry0.faceVertexUvs[0].splice(80, 2);
+	
+	let material0 = new THREE.MeshBasicMaterial({
+		// map: loader.load( 'images/color-grid.png' ), // for testing placement
+		colorWrite: false
+	});
+	
+	let mesh0 = new THREE.Mesh( geometry0, material0 );
+	
+	mesh0.rotation.x = -Math.PI/2;
+	markerRoot1.add(mesh0);	
 }
-
-
 function update()
 {
-	if ( markerRoot1.visible )
-		mesh1.rotation.y += 0.01;
 	// update artoolkit on every frame
 	if ( arToolkitSource.ready !== false )
 		arToolkitContext.update( arToolkitSource.domElement );
 }
-
-
 function render()
 {
 	renderer.render( scene, camera );
 }
-
-
 function animate()
 {
 	requestAnimationFrame(animate);
@@ -161,65 +146,7 @@ function animate()
 	update();
 	render();
 }
-
 </script>
 
 </body>
-</html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!doctype HTML>
-<html>
-<script src="https://aframe.io/releases/0.6.1/aframe.min.js"></script>
-<script src="https://maxramgraber.github.io/EGU-lens-AR/aframe-ar.js"> </script>
-<script src="https://maxramgraber.github.io/EGU-lens-AR/play-on-window-click.js"></script>     
- 	
-  <body style='margin : 0px; overflow: hidden;'>
-    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false;'>
-      <a-assets> 
-        <video id="video" autoplay loop="false" src="https://maxramgraber.github.io/EGU-lens-AR/output_lens_quick.mp4"></video> 
-      </a-assets>  	
-      <a-marker preset='kanji'>
-        <a-entity rotation="-90 0 0" scale="0.7 0.7 0.7">
-          <a-video src="#video" width="3.5" height="2" position="0.5 0 -2" play-on-window-click></a-video>
-        </a-entity>
-      </a-marker>
-      
-      <a-entity camera>
-        <a-entity cursor="fuse: true; fuseTimeout: 50"
-            position="0 0 -1">
-        </a-entity>
-      </a-entity>
-      
-    </a-scene>
-  </body>
 </html>
